@@ -1,11 +1,22 @@
-import { ConstructorPage, Feed, Login, NotFound404 } from '@pages';
+import {
+  ConstructorPage,
+  Feed,
+  Login,
+  NotFound404,
+  ForgotPassword,
+  ResetPassword,
+  Register,
+  Profile,
+  ProfileOrders
+} from '@pages';
 import '../../index.css';
 import styles from './app.module.css';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
   selectIngredients,
-  fetchIngredients
+  fetchIngredients,
+  fetchFeed
 } from '../../slice/stellarBurgerSlice';
 import { useSelector, useDispatch } from '../../services/store';
 
@@ -28,6 +39,16 @@ export const App = () => {
     }
   }, []);
 
+  useEffect(() => {
+    dispatch(fetchFeed());
+  }, []);
+
+  const navigate = useNavigate();
+
+  const onCloseHandler = (path: string) => () => {
+    navigate(path);
+  };
+
   return (
     <div className={styles.app}>
       <AppHeader />
@@ -37,7 +58,7 @@ export const App = () => {
         <Route
           path='/login'
           element={
-            <ProtectedRoute>
+            <ProtectedRoute loginRequired={false}>
               <Login />
             </ProtectedRoute>
           }
@@ -45,47 +66,47 @@ export const App = () => {
         <Route
           path='/register'
           element={
-            <ProtectedRoute>
-              <Login />
+            <ProtectedRoute loginRequired={false}>
+              <Register />
             </ProtectedRoute>
           }
         />
         <Route
           path='/forgot-password'
           element={
-            <ProtectedRoute>
-              <Login />
+            <ProtectedRoute loginRequired={false}>
+              <ForgotPassword />
             </ProtectedRoute>
           }
         />
         <Route
           path='/reset-password'
           element={
-            <ProtectedRoute>
-              <Login />
+            <ProtectedRoute loginRequired={false}>
+              <ResetPassword />
             </ProtectedRoute>
           }
         />
         <Route
           path='/profile'
           element={
-            <ProtectedRoute>
-              <Login />
+            <ProtectedRoute loginRequired>
+              <Profile />
             </ProtectedRoute>
           }
         />
         <Route
           path='/profile/orders'
           element={
-            <ProtectedRoute>
-              <Login />
+            <ProtectedRoute loginRequired>
+              <ProfileOrders />
             </ProtectedRoute>
           }
         />
         <Route
           path='/feed/:number'
           element={
-            <Modal title='feed' onClose={() => {}}>
+            <Modal title='feed' onClose={onCloseHandler('/feed')}>
               <OrderInfo />
             </Modal>
           }
@@ -93,7 +114,7 @@ export const App = () => {
         <Route
           path='/ingredients/:id'
           element={
-            <Modal title='ingredients' onClose={() => {}}>
+            <Modal title='ingredients' onClose={onCloseHandler('/')}>
               <IngredientDetails />
             </Modal>
           }
@@ -101,8 +122,11 @@ export const App = () => {
         <Route
           path='/profile/orders/:number'
           element={
-            <ProtectedRoute>
-              <Modal title='profile' onClose={() => {}}>
+            <ProtectedRoute loginRequired>
+              <Modal
+                title='profile'
+                onClose={onCloseHandler('/profile/orders')}
+              >
                 <OrderInfo />
               </Modal>
             </ProtectedRoute>

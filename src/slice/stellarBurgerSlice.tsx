@@ -15,7 +15,15 @@ import {
   TLoginData
 } from '@api';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TIngredient, TOrder, TConstructorItems, TUser } from '@utils-types';
+import {
+  TIngredient,
+  TOrder,
+  TConstructorItems,
+  TUser,
+  TConstructorIngredient
+} from '@utils-types';
+import { setCookie } from '../utils/cookie';
+import { stat } from 'fs';
 
 type TInitialState = {
   ingredients: TIngredient[];
@@ -27,8 +35,9 @@ type TInitialState = {
   orders: TOrder[];
   totalOrders: number;
   totalToday: number;
-  userOrders: TOrder[] | null;
+  userOrders: TOrder[];
   isAuthenticated: boolean;
+  error: string;
 };
 
 export const initialState: TInitialState = {
@@ -49,21 +58,74 @@ export const initialState: TInitialState = {
   orders: [],
   totalOrders: 0,
   totalToday: 0,
-  userOrders: null,
-  isAuthenticated: false
+  userOrders: [],
+  isAuthenticated: false,
+  error: ''
 };
 
 const stellarBurgerSlice = createSlice({
   name: 'stellarBurger',
   initialState,
-  reducers: {},
+  reducers: {
+    addIngredient(state, action: PayloadAction<TConstructorIngredient>) {
+      if (action.payload.type === 'bun') {
+        state.constructorItems.bun = action.payload;
+      } else {
+        state.constructorItems.ingredients.push({
+          ...action.payload,
+          id: action.payload.id
+        });
+      }
+    },
+    removeIngredient(state, action: PayloadAction<TConstructorIngredient>) {
+      state.constructorItems.ingredients =
+        state.constructorItems.ingredients.filter(
+          (item) => item.id !== action.payload.id
+        );
+    },
+    moveIngredientUp(state, action: PayloadAction<TConstructorIngredient>) {
+      const index = state.constructorItems.ingredients.findIndex(
+        (item) => item.id === action.payload.id
+      );
+      console.log(index);
+      const temp = state.constructorItems.ingredients[index - 1];
+      state.constructorItems.ingredients[index - 1] =
+        state.constructorItems.ingredients[index];
+      state.constructorItems.ingredients[index] = temp;
+    },
+    moveIngredientDown(state, action: PayloadAction<TConstructorIngredient>) {
+      const index = state.constructorItems.ingredients.findIndex(
+        (item) => item.id === action.payload.id
+      );
+      const temp = state.constructorItems.ingredients[index + 1];
+      state.constructorItems.ingredients[index + 1] =
+        state.constructorItems.ingredients[index];
+      state.constructorItems.ingredients[index] = temp;
+    },
+    closeOrder(state) {
+      state.orderRequest = false;
+      state.orderModalData = null;
+      state.constructorItems = {
+        bun: {
+          price: 0
+        },
+        ingredients: []
+      };
+    }
+  },
   selectors: {
     selectIngredients: (state) => state.ingredients,
     selectLoading: (state) => state.loading,
     selectConstructorItems: (state) => state.constructorItems,
     selectOrderRequest: (state) => state.orderRequest,
     selectOrderModalData: (state) => state.orderModalData,
-    selectUser: (state) => state.user
+    selectUser: (state) => state.user,
+    selectIsAuthenticated: (state) => state.isAuthenticated,
+    selectOrders: (state) => state.orders,
+    selectTotal: (state) => state.totalOrders,
+    selectTotalToday: (state) => state.totalToday,
+    selectErrors: (state) => state.error,
+    selectUserOrders: (state) => state.userOrders
   },
   extraReducers: (builder) => {
     builder
@@ -126,8 +188,9 @@ const stellarBurgerSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
       })
-      .addCase(registerUser.rejected, (state) => {
+      .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.error.message!;
       })
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
@@ -136,8 +199,9 @@ const stellarBurgerSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
       })
-      .addCase(loginUser.rejected, (state) => {
+      .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.error.message!;
       })
       .addCase(getUser.pending, (state) => {
         state.loading = true;
@@ -156,6 +220,7 @@ const stellarBurgerSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.loading = false;
+        state.user = { name: '', email: '' };
         state.isAuthenticated = false;
       })
       .addCase(logoutUser.rejected, (state) => {
@@ -235,6 +300,19 @@ export const {
   selectConstructorItems,
   selectOrderRequest,
   selectOrderModalData,
-  selectUser
+  selectUser,
+  selectIsAuthenticated,
+  selectOrders,
+  selectTotal,
+  selectTotalToday,
+  selectErrors,
+  selectUserOrders
 } = stellarBurgerSlice.selectors;
+export const {
+  addIngredient,
+  removeIngredient,
+  moveIngredientUp,
+  moveIngredientDown,
+  closeOrder
+} = stellarBurgerSlice.actions;
 export const stellarBurgerReducer = stellarBurgerSlice.reducer;
