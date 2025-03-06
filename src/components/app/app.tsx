@@ -16,7 +16,11 @@ import { useEffect } from 'react';
 import {
   selectIngredients,
   fetchIngredients,
-  fetchFeed
+  fetchFeed,
+  selectIsAuthenticated,
+  getUser,
+  selectIsModalOpened,
+  closeModal
 } from '../../slice/stellarBurgerSlice';
 import { useSelector, useDispatch } from '../../services/store';
 
@@ -27,11 +31,26 @@ import {
   OrderInfo,
   ProtectedRoute
 } from '@components';
+import { getCookie, deleteCookie } from '../../utils/cookie';
 
 export const App = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const ingredients = useSelector(selectIngredients);
+  const token = getCookie('accessToken');
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isOpened = useSelector(selectIsModalOpened);
+
+  useEffect(() => {
+    if (!isAuthenticated && token) {
+      dispatch(getUser())
+        .unwrap()
+        .catch((e) => {
+          deleteCookie('accessToken');
+          localStorage.removeItem('refreshToken');
+        });
+    }
+  }, []);
 
   useEffect(() => {
     if (!ingredients.length) {
@@ -52,7 +71,7 @@ export const App = () => {
   return (
     <div className={styles.app}>
       <AppHeader />
-      <Routes location={location}>
+      <Routes location={location.state?.background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
         <Route
@@ -103,37 +122,48 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path='/feed/:number'
-          element={
-            <Modal title='feed' onClose={onCloseHandler('/feed')}>
-              <OrderInfo />
-            </Modal>
-          }
-        />
-        <Route
-          path='/ingredients/:id'
-          element={
-            <Modal title='ingredients' onClose={onCloseHandler('/')}>
-              <IngredientDetails />
-            </Modal>
-          }
-        />
-        <Route
-          path='/profile/orders/:number'
-          element={
-            <ProtectedRoute loginRequired>
-              <Modal
-                title='profile'
-                onClose={onCloseHandler('/profile/orders')}
-              >
-                <OrderInfo />
-              </Modal>
-            </ProtectedRoute>
-          }
-        />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
         <Route path='*' element={<NotFound404 />} />
       </Routes>
+
+      {isOpened && location.state?.background && (
+        <Routes>
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal
+                title='Детали ингредиента'
+                onClose={() => {
+                  dispatch(closeModal());
+                }}
+              >
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal title='feed' onClose={onCloseHandler('/feed')}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <ProtectedRoute loginRequired>
+                <Modal
+                  title='profile'
+                  onClose={onCloseHandler('/profile/orders')}
+                >
+                  <OrderInfo />
+                </Modal>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      )}
     </div>
   );
 };

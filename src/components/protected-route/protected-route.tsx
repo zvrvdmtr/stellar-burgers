@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { useSelector } from '../../services/store';
 import { selectIsAuthenticated } from '../../slice/stellarBurgerSlice';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 type ProtectedRouteProps = {
   children: React.ReactElement;
@@ -13,13 +13,15 @@ export const ProtectedRoute = ({
   loginRequired
 }: ProtectedRouteProps) => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const location = useLocation();
 
   if (loginRequired && !isAuthenticated) {
-    return <Navigate replace to='/login' />;
+    return <Navigate replace to='/login' state={{ from: location }} />;
   }
 
   if (!loginRequired && isAuthenticated) {
-    return <Navigate replace to={'/'} />;
+    const from = location.state?.from || { pathname: '/' };
+    return <Navigate replace to={from} />;
   }
 
   return children;
