@@ -89,7 +89,6 @@ const stellarBurgerSlice = createSlice({
       const index = state.constructorItems.ingredients.findIndex(
         (item) => item.id === action.payload.id
       );
-      console.log(index);
       const temp = state.constructorItems.ingredients[index - 1];
       state.constructorItems.ingredients[index - 1] =
         state.constructorItems.ingredients[index];
@@ -119,6 +118,7 @@ const stellarBurgerSlice = createSlice({
     },
     closeModal(state) {
       state.isModalOpened = false;
+      state.orderModalData = null;
     }
   },
   selectors: {
@@ -185,7 +185,7 @@ const stellarBurgerSlice = createSlice({
       })
       .addCase(fetchOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload.orders;
+        state.orderModalData = action.payload;
       })
       .addCase(fetchOrder.rejected, (state) => {
         state.loading = false;
@@ -269,7 +269,13 @@ export const newOrder = createAsyncThunk(
 
 export const fetchOrder = createAsyncThunk(
   'orders/getOrder',
-  async (orderId: number) => getOrderByNumberApi(orderId)
+  async (orderId: number) => {
+    const response = await getOrderByNumberApi(orderId);
+    if (!response?.success) {
+      return null;
+    }
+    return response.orders[0];
+  }
 );
 
 export const registerUser = createAsyncThunk(

@@ -6,26 +6,23 @@ import { useSelector, useDispatch } from '../../services/store';
 import { useEffect } from 'react';
 import {
   selectIngredients,
-  selectOrders,
-  fetchOrder
+  fetchOrder,
+  selectOrderModalData
 } from '../../slice/stellarBurgerSlice';
 import { useParams } from 'react-router-dom';
 
 export const OrderInfo: FC = () => {
   /** TODO: взять переменные orderData и ingredients из стора */
   const params = useParams<{ number: string }>();
-  const orders = useSelector(selectOrders);
   const dispatch = useDispatch();
 
   const ingredients: TIngredient[] = useSelector(selectIngredients);
 
-  const orderData = orders.find(
-    (item) => item.number === parseInt(params.number!)
-  );
+  const orderData = useSelector(selectOrderModalData);
 
   useEffect(() => {
     dispatch(fetchOrder(Number(params.number)));
-  });
+  }, [dispatch]);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
@@ -68,8 +65,6 @@ export const OrderInfo: FC = () => {
       total
     };
   }, [orderData, ingredients]);
-
-  console.log(orderInfo);
 
   if (!orderInfo) {
     return <Preloader />;

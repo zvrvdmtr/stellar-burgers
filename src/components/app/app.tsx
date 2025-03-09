@@ -39,7 +39,6 @@ export const App = () => {
   const ingredients = useSelector(selectIngredients);
   const token = getCookie('accessToken');
   const isAuthenticated = useSelector(selectIsAuthenticated);
-  const isOpened = useSelector(selectIsModalOpened);
 
   useEffect(() => {
     if (!isAuthenticated && token) {
@@ -64,8 +63,9 @@ export const App = () => {
 
   const navigate = useNavigate();
 
-  const onCloseHandler = (path: string) => () => {
-    navigate(path);
+  const onCloseHandler = () => {
+    navigate(-1);
+    dispatch(closeModal());
   };
 
   return (
@@ -74,6 +74,9 @@ export const App = () => {
       <Routes location={location.state?.background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route path='*' element={<NotFound404 />} />
         <Route
           path='/login'
           element={
@@ -122,21 +125,22 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
-        <Route path='*' element={<NotFound404 />} />
+        <Route
+          path='/profile/orders/:number'
+          element={
+            <ProtectedRoute loginRequired>
+              <OrderInfo />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
 
-      {isOpened && location.state?.background && (
+      {location.state?.background && (
         <Routes>
           <Route
             path='/ingredients/:id'
             element={
-              <Modal
-                title='Детали ингредиента'
-                onClose={() => {
-                  dispatch(closeModal());
-                }}
-              >
+              <Modal title='Детали ингредиента' onClose={onCloseHandler}>
                 <IngredientDetails />
               </Modal>
             }
@@ -144,7 +148,7 @@ export const App = () => {
           <Route
             path='/feed/:number'
             element={
-              <Modal title='feed' onClose={onCloseHandler('/feed')}>
+              <Modal title='feed' onClose={onCloseHandler}>
                 <OrderInfo />
               </Modal>
             }
@@ -153,10 +157,7 @@ export const App = () => {
             path='/profile/orders/:number'
             element={
               <ProtectedRoute loginRequired>
-                <Modal
-                  title='profile'
-                  onClose={onCloseHandler('/profile/orders')}
-                >
+                <Modal title='profile' onClose={onCloseHandler}>
                   <OrderInfo />
                 </Modal>
               </ProtectedRoute>
