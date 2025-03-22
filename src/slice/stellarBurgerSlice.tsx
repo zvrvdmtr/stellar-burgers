@@ -22,8 +22,6 @@ import {
   TUser,
   TConstructorIngredient
 } from '@utils-types';
-import { setCookie } from '../utils/cookie';
-import { stat } from 'fs';
 
 type TInitialState = {
   ingredients: TIngredient[];
@@ -145,8 +143,9 @@ const stellarBurgerSlice = createSlice({
         state.loading = false;
         state.ingredients = action.payload;
       })
-      .addCase(fetchIngredients.rejected, (state) => {
+      .addCase(fetchIngredients.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.error.message!;
       })
       .addCase(fetchFeed.pending, (state) => {
         state.loading = true;
