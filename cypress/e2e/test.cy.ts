@@ -1,5 +1,6 @@
 import * as ingredientsFixture from '../fixtures/ingredients.json';
 import * as orderFixture from '../fixtures/order.json';
+import { deleteCookie } from '../../src/utils/cookie';
 
 describe('E2E тест конструктора бургеров', () => {
   beforeEach(() => {
@@ -36,10 +37,28 @@ describe('E2E тест конструктора бургеров', () => {
     });
   });
 
+  describe('Добавление ингредиента в конструктор', () => {
+    it('Модальное окно ингредиента', () => {
+      cy.get('[data-constructor-ingredients]').should('exist');
+
+      cy.get('[data-ingredient="main"]:first-of-type button').click();
+      cy.get('[data-constructor-ingredients]').should('not.exist');
+    });
+  });
+
   describe('Оформление заказа если пользователь не авторизован', () => {
     it('Модальное окно ингредиента', () => {
+      cy.get('[data-constructor-bun-top]').should('exist');
+      cy.get('[data-constructor-bun-down]').should('exist');
+      cy.get('[data-constructor-ingredients]').should('exist');
+
       cy.get('[data-ingredient="bun"]:first-of-type button').click();
+      cy.get('[data-constructor-bun-top]').should('not.exist');
+      cy.get('[data-constructor-bun-down]').should('not.exist');
+
       cy.get('[data-ingredient="main"]:first-of-type button').click();
+      cy.get('[data-constructor-ingredients]').should('not.exist');
+
       cy.get('[data-order-button]').click();
       cy.get('button').contains('Войти');
     });
@@ -55,9 +74,23 @@ describe('E2E тест конструктора бургеров', () => {
       cy.visit('http://localhost:4000/');
     });
 
+    afterEach(() => {
+      deleteCookie('accessToken');
+      localStorage.removeItem('refreshToken');
+    });
+
     it('Модальное окно заказа', () => {
+      cy.get('[data-constructor-bun-top]').should('exist');
+      cy.get('[data-constructor-bun-down]').should('exist');
+      cy.get('[data-constructor-ingredients]').should('exist');
+
       cy.get('[data-ingredient="bun"]:first-of-type button').click();
+      cy.get('[data-constructor-bun-top]').should('not.exist');
+      cy.get('[data-constructor-bun-down]').should('not.exist');
+
       cy.get('[data-ingredient="main"]:first-of-type button').click();
+      cy.get('[data-constructor-ingredients]').should('not.exist');
+
       cy.get('[data-order-button]').click();
 
       cy.get('#modals').children().should('have.length', 2);
@@ -65,6 +98,10 @@ describe('E2E тест конструктора бургеров', () => {
       cy.get('#modals h2').contains(orderFixture.order.number);
       cy.get('#modals button').click();
       cy.get('[data-order-button]').should('be.disabled');
+
+      cy.get('[data-constructor-bun-top]').contains('Выберите булки');
+      cy.get('[data-constructor-bun-down]').contains('Выберите булки');
+      cy.get('[data-constructor-ingredients]').contains('Выберите начинку');
     });
   });
 });
