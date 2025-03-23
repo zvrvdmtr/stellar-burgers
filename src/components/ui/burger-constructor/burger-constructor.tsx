@@ -19,7 +19,7 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
   closeOrderModal
 }) => (
   <section className={styles.burger_constructor}>
-    {constructorItems.bun ? (
+    {constructorItems.bun.price !== 0 ? (
       <div className={`${styles.element} mb-4 mr-4`}>
         <ConstructorElement
           type='top'
@@ -31,6 +31,7 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
       </div>
     ) : (
       <div
+        data-constructor-bun-top
         className={`${styles.noBuns} ${styles.noBunsTop} ml-8 mb-4 mr-5 text text_type_main-default`}
       >
         Выберите булки
@@ -50,13 +51,14 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
         )
       ) : (
         <div
+          data-constructor-ingredients
           className={`${styles.noBuns} ml-8 mb-4 mr-5 text text_type_main-default`}
         >
           Выберите начинку
         </div>
       )}
     </ul>
-    {constructorItems.bun ? (
+    {constructorItems.bun.price !== 0 ? (
       <div className={`${styles.element} mt-4 mr-4`}>
         <ConstructorElement
           type='bottom'
@@ -68,6 +70,7 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
       </div>
     ) : (
       <div
+        data-constructor-bun-down
         className={`${styles.noBuns} ${styles.noBunsBottom} ml-8 mb-4 mr-5 text text_type_main-default`}
       >
         Выберите булки
@@ -79,11 +82,16 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
         <CurrencyIcon type='primary' />
       </div>
       <Button
+        data-order-button
         htmlType='button'
         type='primary'
         size='large'
         children='Оформить заказ'
         onClick={onOrderClick}
+        disabled={
+          constructorItems.bun === false ||
+          constructorItems.ingredients.length === 0
+        }
       />
     </div>
 
